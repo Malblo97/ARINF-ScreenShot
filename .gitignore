@@ -1,0 +1,22 @@
+# Node modules and build output
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs, debug and coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+coverage/
+*.log
+/src/generated/prisma
