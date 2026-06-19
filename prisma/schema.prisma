@@ -57,3 +57,95 @@ model Roles {
 
   @@map("Roles")
 }
+
+model Projects {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  status       String    @default("draft")
+  ajUser       String?
+  ajDate       DateTime  @default(now())
+  moUser       String?
+  moDate       DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  UsAcc_owner_id  Int
+  UserAccounts    UserAccounts @relation(fields: [UsAcc_owner_id], references: [id])
+
+  ProjectUsers            ProjectUsers[]
+  Invitations             Invitations[]
+  ProjectStatusHistories  ProjectStatusHistories[]
+  Scripts                 Scripts[]
+
+  @@map("Projects")
+}
+
+model ProjectUsers {
+  id      Int      @id @default(autoincrement())
+  ajDate  DateTime @default(now())
+
+  Proj_contains_id  Int
+  UsAcc_member_id   Int
+  Rol_defines_id    Int
+
+  Projects      Projects      @relation(fields: [Proj_contains_id], references: [id])
+  UserAccounts  UserAccounts  @relation(fields: [UsAcc_member_id], references: [id])
+  Roles         Roles         @relation(fields: [Rol_defines_id], references: [id])
+
+  PermissionOverrides  PermissionOverrides[]
+  Validations          Validations[]
+  Comments             Comments[]
+  Notes                Notes[]
+
+  @@unique([Proj_contains_id, UsAcc_member_id]) // contrainte d'unicité pour éviter les doublons de membres dans un projet
+  @@map("ProjectUsers")
+}
+
+model PermissionOverrides {
+  id          Int      @id @default(autoincrement())
+  entityType  String
+  entityId    Int
+  permission  String
+  granted     Boolean  @default(true)
+  ajDate      DateTime @default(now())
+
+  ProUs_detailed_id  Int
+  ProjectUsers       ProjectUsers @relation(fields: [ProUs_detailed_id], references: [id])
+
+  @@unique([ProUs_detailed_id, entityType, entityId, permission])
+  @@map("PermissionOverrides")
+}
+
+model Invitations {
+  id          Int      @id @default(autoincrement())
+  email       String
+  token       String   @unique
+  statuts     String   @default("pending")
+  expiresAt   DateTime
+
+  Proj_sends_id     Int
+  UsAcc_invites_id  Int
+  Rol_assigned_id   Int
+
+  Projects      Projects      @relation(fields: [Proj_sends_id], references: [id])
+  UserAccounts  UserAccounts  @relation(fields: [UsAcc_invites_id], references: [id])
+  Roles         Roles         @relation(fields: [Rol_assigned_id], references: [id])
+
+  @@map("Invitations")
+}
+
+model ProjectStatusHistories {
+  id          Int      @id @default(autoincrement())
+  fromStatus  String?
+  toStatus    String
+  reason      String?
+  ajDate      DateTime @default(now())
+
+  Proj_historical_id  Int
+  UsAcc_changes_id    Int
+
+  Projects      Projects      @relation(fields: [Proj_historical_id], references: [id])
+  UserAccounts  UserAccounts  @relation(fields: [UsAcc_changes_id], references: [id])
+  
+  @@map("ProjectStatusHistories")
+}
