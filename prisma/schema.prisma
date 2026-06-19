@@ -11,3 +11,49 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model UserAccounts {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  passwordHash  String
+  displayName   String
+  avatarUrl     String?
+  ajUsername    String?
+  ajDate        DateTime  @default(now())
+  moUser        String?
+  moDate        DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  AuthSessions  AuthSessions[]
+  Projects      Projects[]
+  ProjectUsers  ProjectUsers[]
+  Invitations   Invitations[]
+  ProjectStatusHistories ProjectStatusHistories[]
+
+  @@map("UserAccounts")
+}
+
+model AuthSessions {
+  id          Int      @id @default(autoincrement())
+  token       String   @unique
+  deviceInfo  String?
+  ipAddress   String?
+  expiresAt   DateTime
+  ajDate      DateTime @default(now())
+
+  UsAcc_owns_id  Int
+  UserAccounts   UserAccounts @relation(fields: [UsAcc_owns_id], references: [id])
+
+  @@map("AuthSessions")
+}
+
+model Roles {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  permissions Json?
+
+  ProjectUsers  ProjectUsers[]
+  Invitations   Invitations[]
+
+  @@map("Roles")
+}
