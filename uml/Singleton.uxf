@@ -1,0 +1,21 @@
+<diagram program="umletino" version="15.1"><zoom_level>13</zoom_level><element><id>UMLClass</id><coordinates><x>299</x><y>260</y><w>273</w><h>156</h></coordinates><panel_attributes>PrismaClientSingleton
+--
+-_instance_: PrismaClient
+-adapter: PrismaPg
+--
+-PrismaClientSingleton()
++_getInstance()_: PrismaClient
++disconnect(): void</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLNote</id><coordinates><x>702</x><y>182</y><w>195</w><h>299</h></coordinates><panel_attributes>Patron : Singleton
+
+Garantit qu'une seule
+instance de PrismaClient
+existe dans toute l'app.
+
+Évite les connexions
+PostgreSQL orphelines
+en mode hot-reload.
+
+Adapté à Prisma 7 :
+l'adapter PrismaPg est
+créé une seule fois et
+réutilisé par l'instance.</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>559</x><y>299</y><w>169</w><h>39</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;10;110;10</additional_attributes></element></diagram>
