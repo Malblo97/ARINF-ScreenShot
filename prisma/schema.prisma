@@ -76,6 +76,7 @@ model Projects {
   Invitations             Invitations[]
   ProjectStatusHistories  ProjectStatusHistories[]
   Scripts                 Scripts[]
+  Characters              Characters[]
 
   @@map("Projects")
 }
@@ -93,9 +94,9 @@ model ProjectUsers {
   Roles         Roles         @relation(fields: [Rol_defines_id], references: [id])
 
   PermissionOverrides  PermissionOverrides[]
-  Validations          Validations[]
+  /*Validations          Validations[]
   Comments             Comments[]
-  Notes                Notes[]
+  Notes                Notes[]*/
 
   @@unique([Proj_contains_id, UsAcc_member_id]) // contrainte d'unicité pour éviter les doublons de membres dans un projet
   @@map("ProjectUsers")
@@ -149,3 +150,74 @@ model ProjectStatusHistories {
   
   @@map("ProjectStatusHistories")
 }
+
+model Scripts {
+  id          Int       @id @default(autoincrement())
+  title       String
+  variant     String    @default("main")
+  version     Int       @default(1)
+  ajDate      DateTime  @default(now())
+  deletedAt   DateTime?
+
+  Proj_contains_id  Int
+  Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
+
+  Acts  Acts[]
+
+  @@unique([Proj_contains_id, title, variant])
+  @@map("Scripts")
+}
+
+model Acts {
+  id        Int       @id @default(autoincrement())
+  title     String
+  position  Int
+  status    String    @default("draft")
+  deletedAt DateTime?
+
+  Scri_contains_id  Int
+  Scripts           Scripts @relation(fields: [Scri_contains_id], references: [id])
+
+  Scenes  Scenes[]
+
+  @@unique([Scri_contains_id, position])
+  @@map("Acts")
+}
+
+model Scenes {
+  id                  Int       @id @default(autoincrement())
+  title               String?
+  interiorExterior    String?
+  location            String
+  timeOfDay           String?
+  position            Int
+  version             Int       @default(1)
+  status              String    @default("draft")
+  estimatedPageCount  Int?
+  deletedAt           DateTime?
+
+  Act_contains_id  Int
+  Acts             Acts @relation(fields: [Act_contains_id], references: [id])
+
+  //SceneElements  SceneElements[]
+
+  @@unique([Act_contains_id, position])
+  @@map("Scenes")
+}
+
+model Characters {
+  id           Int       @id @default(autoincrement())
+  name         String
+  description  String?
+  arc          String?
+  deletedAt    DateTime?
+
+  Proj_contains_id  Int
+  Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
+
+  //SceneElements  SceneElements[]
+
+  @@unique([Proj_contains_id, name])
+  @@map("Characters")
+}
+
