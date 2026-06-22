@@ -29,6 +29,8 @@ model UserAccounts {
   ProjectUsers  ProjectUsers[]
   Invitations   Invitations[]
   ProjectStatusHistories ProjectStatusHistories[]
+  SceneElementSnapshots  SceneElementSnapshots[]
+  ElementOperations       ElementOperations[]
 
   @@map("UserAccounts")
 }
@@ -77,6 +79,7 @@ model Projects {
   ProjectStatusHistories  ProjectStatusHistories[]
   Scripts                 Scripts[]
   Characters              Characters[]
+  SceneComponents         SceneComponents[]
 
   @@map("Projects")
 }
@@ -199,7 +202,8 @@ model Scenes {
   Act_contains_id  Int
   Acts             Acts @relation(fields: [Act_contains_id], references: [id])
 
-  //SceneElements  SceneElements[]
+  SceneElements  SceneElements[]
+  ComponentAttachments  ComponentAttachments[]
 
   @@unique([Act_contains_id, position])
   @@map("Scenes")
@@ -215,9 +219,100 @@ model Characters {
   Proj_contains_id  Int
   Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
 
-  //SceneElements  SceneElements[]
+  SceneElements  SceneElements[]
 
   @@unique([Proj_contains_id, name])
   @@map("Characters")
 }
 
+model SceneElements {
+  id         Int       @id @default(autoincrement())
+  type       String
+  content    String?
+  position   Int
+  version    Int       @default(1)
+  deletedAt  DateTime?
+
+  Scen_contains_id  Int
+  Scenes            Scenes @relation(fields: [Scen_contains_id], references: [id])
+
+  Scen_parent_id  Int?
+  parent          SceneElements?  @relation("DialogLines", fields: [Scen_parent_id], references: [id])
+  children        SceneElements[] @relation("DialogLines")
+
+  Char_speaks_id  Int?
+  Characters      Characters? @relation(fields: [Char_speaks_id], references: [id])
+
+  SceneElementSnapshots  SceneElementSnapshots[]
+  ElementOperations       ElementOperations[]
+  ComponentAttachments     ComponentAttachments[]
+
+  @@unique([Scen_contains_id, position])
+  @@map("SceneElements")
+}
+
+model SceneElementSnapshots {
+  id          Int      @id @default(autoincrement())
+  version     Int
+  content     String?
+  changeType  String
+  ajDate      DateTime @default(now())
+
+  ScElem_snapshot_id  Int
+  SceneElements       SceneElements @relation(fields: [ScElem_snapshot_id], references: [id])
+
+  UsAcc_author_id  Int
+  UserAccounts     UserAccounts @relation(fields: [UsAcc_author_id], references: [id])
+
+  @@unique([ScElem_snapshot_id, version])
+  @@map("SceneElementSnapshots")
+}
+
+model ElementOperations {
+  id        Int      @id @default(autoincrement())
+  opType    String
+  payload   Json
+  clock     Int
+  applied   Boolean  @default(false)
+  ajDate    DateTime @default(now())
+
+  ScElem_operation_id  Int
+  SceneElements        SceneElements @relation(fields: [ScElem_operation_id], references: [id])
+
+  UsAcc_author_id  Int
+  UserAccounts     UserAccounts @relation(fields: [UsAcc_author_id], references: [id])
+
+  @@map("ElementOperations")
+}
+
+model SceneComponents {
+  id      Int      @id @default(autoincrement())
+  type    String
+  label   String
+  data    Json
+  ajDate  DateTime @default(now())
+
+  Proj_contains_id  Int
+  Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
+
+  ComponentAttachments  ComponentAttachments[]
+
+  @@map("SceneComponents")
+}
+
+model ComponentAttachments {
+  deptId  Int      @default(autoincrement())
+  ajDate  DateTime @default(now())
+
+  ScComp_attaches_id  Int
+  SceneComponents     SceneComponents @relation(fields: [ScComp_attaches_id], references: [id])
+
+  Scen_target_id  Int?
+  Scenes          Scenes? @relation(fields: [Scen_target_id], references: [id])
+
+  ScElem_target_id  Int?
+  SceneElements     SceneElements? @relation(fields: [ScElem_target_id], references: [id])
+
+  @@id([ScComp_attaches_id, deptId])
+  @@map("ComponentAttachments")
+}
