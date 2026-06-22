@@ -97,9 +97,9 @@ model ProjectUsers {
   Roles         Roles         @relation(fields: [Rol_defines_id], references: [id])
 
   PermissionOverrides  PermissionOverrides[]
-  /*Validations          Validations[]
+  Validations          Validations[]
   Comments             Comments[]
-  Notes                Notes[]*/
+  Notes                Notes[]
 
   @@unique([Proj_contains_id, UsAcc_member_id]) // contrainte d'unicité pour éviter les doublons de membres dans un projet
   @@map("ProjectUsers")
@@ -166,6 +166,7 @@ model Scripts {
   Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
 
   Acts  Acts[]
+  Validations          Validations[]
 
   @@unique([Proj_contains_id, title, variant])
   @@map("Scripts")
@@ -182,6 +183,7 @@ model Acts {
   Scripts           Scripts @relation(fields: [Scri_contains_id], references: [id])
 
   Scenes  Scenes[]
+  Validations          Validations[]
 
   @@unique([Scri_contains_id, position])
   @@map("Acts")
@@ -204,6 +206,9 @@ model Scenes {
 
   SceneElements  SceneElements[]
   ComponentAttachments  ComponentAttachments[]
+    Validations          Validations[]
+    Comments             Comments[]
+    Notes                Notes[]
 
   @@unique([Act_contains_id, position])
   @@map("Scenes")
@@ -246,6 +251,8 @@ model SceneElements {
   SceneElementSnapshots  SceneElementSnapshots[]
   ElementOperations       ElementOperations[]
   ComponentAttachments     ComponentAttachments[]
+  Comments                 Comments[]
+  Notes                    Notes[]
 
   @@unique([Scen_contains_id, position])
   @@map("SceneElements")
@@ -315,4 +322,71 @@ model ComponentAttachments {
 
   @@id([ScComp_attaches_id, deptId])
   @@map("ComponentAttachments")
+}
+
+model Validations {
+  id       Int      @id @default(autoincrement())
+  status   String
+  comment  String?
+  ajDate   DateTime @default(now())
+
+  ProjUs_validates_id  Int
+  ProjectUsers         ProjectUsers @relation(fields: [ProjUs_validates_id], references: [id])
+
+  Scen_target_id  Int?
+  Scenes          Scenes? @relation(fields: [Scen_target_id], references: [id])
+
+  Act_target_id   Int?
+  Acts            Acts? @relation(fields: [Act_target_id], references: [id])
+
+  Scri_target_id  Int?
+  Scripts         Scripts? @relation(fields: [Scri_target_id], references: [id])
+
+  Sequ_target_id  Int?
+  //Sequencers      Sequencers? @relation(fields: [Sequ_target_id], references: [id])
+
+  @@map("Validations")
+}
+
+model Comments {
+  id        Int       @id @default(autoincrement())
+  content   String
+  ajDate    DateTime  @default(now())
+  deletedAt DateTime?
+
+  ProjUs_posts_id  Int
+  ProjectUsers     ProjectUsers @relation(fields: [ProjUs_posts_id], references: [id])
+
+  Scen_target_id  Int?
+  Scenes          Scenes? @relation(fields: [Scen_target_id], references: [id])
+
+  ScElem_target_id  Int?
+  SceneElements     SceneElements? @relation(fields: [ScElem_target_id], references: [id])
+
+  DocVers_target_id  Int?
+  // FK composite vers DocumentVersions — ajoutée Jour 3 quand cette table existera
+
+  Comm_parent_id  Int?
+  parent          Comments?  @relation("CommentReplies", fields: [Comm_parent_id], references: [id])
+  replies         Comments[] @relation("CommentReplies")
+
+  @@map("Comments")
+}
+
+model Notes {
+  id        Int      @id @default(autoincrement())
+  content   String
+  isPrivate Boolean  @default(true)
+  ajDate    DateTime @default(now())
+
+  ProjUs_creates_id  Int
+  ProjectUsers       ProjectUsers @relation(fields: [ProjUs_creates_id], references: [id])
+
+  Scen_target_id  Int?
+  Scenes          Scenes? @relation(fields: [Scen_target_id], references: [id])
+
+  ScElem_target_id  Int?
+  SceneElements     SceneElements? @relation(fields: [ScElem_target_id], references: [id])
+
+  @@map("Notes")
 }
