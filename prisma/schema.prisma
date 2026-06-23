@@ -24,13 +24,16 @@ model UserAccounts {
   moDate        DateTime  @updatedAt
   deletedAt     DateTime?
 
-  AuthSessions  AuthSessions[]
-  Projects      Projects[]
-  ProjectUsers  ProjectUsers[]
-  Invitations   Invitations[]
+  AuthSessions           AuthSessions[]
+  Projects               Projects[]
+  ProjectUsers           ProjectUsers[]
+  Invitations            Invitations[]
   ProjectStatusHistories ProjectStatusHistories[]
   SceneElementSnapshots  SceneElementSnapshots[]
-  ElementOperations       ElementOperations[]
+  ElementOperations      ElementOperations[]
+  DocumentVersions       DocumentVersions[]
+  AiJobs                 AiJobs[]
+  Notifications          Notifications[]
 
   @@map("UserAccounts")
 }
@@ -80,6 +83,10 @@ model Projects {
   Scripts                 Scripts[]
   Characters              Characters[]
   SceneComponents         SceneComponents[]
+  Sequencers              Sequencers[]
+  Documents               Documents[]
+  Files                   Files[]
+  AiJobs                  AiJobs[]
 
   @@map("Projects")
 }
@@ -209,6 +216,7 @@ model Scenes {
     Validations          Validations[]
     Comments             Comments[]
     Notes                Notes[]
+  SequencerItems  SequencerItems[]
 
   @@unique([Act_contains_id, position])
   @@map("Scenes")
@@ -343,7 +351,7 @@ model Validations {
   Scripts         Scripts? @relation(fields: [Scri_target_id], references: [id])
 
   Sequ_target_id  Int?
-  //Sequencers      Sequencers? @relation(fields: [Sequ_target_id], references: [id])
+  Sequencers      Sequencers? @relation(fields: [Sequ_target_id], references: [id])
 
   @@map("Validations")
 }
@@ -363,8 +371,9 @@ model Comments {
   ScElem_target_id  Int?
   SceneElements     SceneElements? @relation(fields: [ScElem_target_id], references: [id])
 
-  DocVers_target_id  Int?
-  // FK composite vers DocumentVersions — ajoutée Jour 3 quand cette table existera
+  DocVers_target_id       Int?
+  DocVers_target_deptId   Int?
+  DocumentVersions        DocumentVersions? @relation(fields: [DocVers_target_id, DocVers_target_deptId], references: [Doc_version_id, deptId])
 
   Comm_parent_id  Int?
   parent          Comments?  @relation("CommentReplies", fields: [Comm_parent_id], references: [id])
@@ -389,4 +398,130 @@ model Notes {
   SceneElements     SceneElements? @relation(fields: [ScElem_target_id], references: [id])
 
   @@map("Notes")
+}
+
+model Sequencers {
+  id      Int      @id @default(autoincrement())
+  title   String
+  type    String   @default("storyboard")
+  ajDate  DateTime @default(now())
+
+  Proj_contains_id  Int
+  Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
+
+  SequencerItems  SequencerItems[]
+  Validations     Validations[]
+
+  @@map("Sequencers")
+}
+
+model SequencerItems {
+  deptId        Int      @default(autoincrement())
+  position      Int
+  durationSec   Int?
+  color         String?
+  thumbnailUrl  String?
+  notes         String?
+
+  Sequ_contains_id  Int
+  Sequencers        Sequencers @relation(fields: [Sequ_contains_id], references: [id])
+
+  Scen_ref_id  Int?
+  Scenes       Scenes? @relation(fields: [Scen_ref_id], references: [id], onDelete: SetNull)
+
+  @@id([Sequ_contains_id, deptId])
+  @@unique([Sequ_contains_id, position])
+  @@map("SequencerItems")
+}
+
+model Documents {
+  id      Int      @id @default(autoincrement())
+  title   String
+  type    String
+  ajDate  DateTime @default(now())
+
+  Proj_contains_id  Int
+  Projects          Projects @relation(fields: [Proj_contains_id], references: [id])
+
+  DocumentVersions  DocumentVersions[]
+
+  @@map("Documents")
+}
+
+model DocumentVersions {
+  deptId         Int      @default(autoincrement())
+  versionNumber  Int
+  content        String?
+  source         String   @default("manual")
+  ajDate         DateTime @default(now())
+
+  Doc_version_id  Int
+  Documents       Documents @relation(fields: [Doc_version_id], references: [id])
+
+  UsAcc_creates_id  Int?
+  UserAccounts      UserAccounts? @relation(fields: [UsAcc_creates_id], references: [id])
+
+  Comments  Comments[]
+  AiJobs    AiJobs[]
+  Files     Files[]
+
+  @@id([Doc_version_id, deptId])
+  @@unique([Doc_version_id, versionNumber])
+  @@map("DocumentVersions")
+}
+
+model Files {
+  id          Int      @id @default(autoincrement())
+  filename    String
+  mimeType    String
+  storageUrl  String
+  sizeBytes   Int
+  ajDate      DateTime @default(now())
+
+  DocVers_contains_id        Int?
+  DocVers_contains_deptId    Int?
+  DocumentVersions           DocumentVersions? @relation(fields: [DocVers_contains_id, DocVers_contains_deptId], references: [Doc_version_id, deptId])
+
+  Proj_belongs_id  Int
+  Projects         Projects @relation(fields: [Proj_belongs_id], references: [id])
+
+  @@map("Files")
+}
+
+model AiJobs {
+  id             Int       @id @default(autoincrement())
+  action         String
+  entityType     String?
+  entityId       Int?
+  inputContext   Json?
+  status         String    @default("pending")
+  errorMessage   String?
+  ajDate         DateTime  @default(now())
+  completedAt    DateTime?
+
+  Proj_launches_id  Int
+  Projects          Projects @relation(fields: [Proj_launches_id], references: [id])
+
+  UsAcc_asks_id  Int
+  UserAccounts   UserAccounts @relation(fields: [UsAcc_asks_id], references: [id])
+
+  Doc_produces_id          Int?
+  DocVers_produces_deptId  Int?
+  DocumentVersions         DocumentVersions? @relation(fields: [Doc_produces_id, DocVers_produces_deptId], references: [Doc_version_id, deptId])
+
+  @@map("AiJobs")
+}
+
+model Notifications {
+  id      Int      @id @default(autoincrement())
+  type    String
+  payload Json?
+  read    Boolean  @default(false)
+  ajDate  DateTime @default(now())
+
+  UsAcc_receives_id  Int
+  UserAccounts       UserAccounts @relation(fields: [UsAcc_receives_id], references: [id])
+
+  @@index([UsAcc_receives_id, read])
+  @@map("Notifications")
 }
