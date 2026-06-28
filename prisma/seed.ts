@@ -10,83 +10,39 @@ const prisma = new PrismaClient({ adapter })
 
 
 async function main() {
-  // USER
-  const user = await prisma.userAccounts.create({
-    data: {
-      email: "john.doe@example.com",
-      passwordHash: "hashed-password",
-      displayName: "John Doe",
-      ajUsername: "seed",
-    },
-  });
+  console.log('🌱 Seed en cours...')
 
-  // PROJECT
+  // Étape 1 : créer l'utilisateur
+  const thomas = await prisma.userAccounts.create({
+    data: {
+      email: 'thomas@studio.io',
+      passwordHash: 'hash_dev_uniquement',  // jamais un vrai hash en seed
+      displayName: 'Thomas Renaud'
+    }
+  })
+
+  // Étape 2 : créer les rôles nécessaires
+  const ownerRole = await prisma.roles.create({
+    data: { name: 'owner', permissions: ['scene:write', 'validation:approve', 'member:invite'] }
+  })
+
+  // Étape 3 : créer le projet
   const project = await prisma.projects.create({
     data: {
-      title: "Mon Premier Film",
-      description: "Projet de démonstration",
-      status: "draft",
-      ajUser: "seed",
-      UsAcc_owner_id: user.id,
-    },
-  });
-
-  // SCRIPT
-  const script = await prisma.scripts.create({
-    data: {
-      title: "Version Principale",
-      variant: "main",
-      version: 1,
-      Proj_contains_id: project.id,
-    },
-  });
-
-  // ACT (obligatoire pour créer une scène)
-  const act = await prisma.acts.create({
-    data: {
-      title: "Acte 1",
-      position: 1,
-      Scri_contains_id: script.id,
-    },
-  });
-
-  // SCENE
-  const scene = await prisma.scenes.create({
-    data: {
-      title: "Ouverture",
-      interiorExterior: "INT",
-      location: "Appartement",
-      timeOfDay: "MATIN",
-      position: 1,
-      Act_contains_id: act.id,
-    },
-  });
-
-  // SCENE ELEMENT (non dialogue)
-  const sceneElement = await prisma.sceneElements.create({
-    data: {
-      type: "ACTION",
-      content:
-        "Jean ouvre la fenêtre et observe la ville qui se réveille.",
-      position: 1,
-      Scen_contains_id: scene.id,
-    },
-  });
-
-  console.log({
-    userId: user.id,
-    projectId: project.id,
-    scriptId: script.id,
-    sceneId: scene.id,
-    sceneElementId: sceneElement.id,
-  });
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
+      title: 'DRIVE 2',
+      description: 'Séquel underground. Ryan revient.',
+      status: 'writing',
+      UsAcc_owner_id: thomas.id
+    }
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+
+  // Étape 4 : lier Thomas au projet
+  await prisma.projectUsers.create({
+    data: {
+      Proj_contains_id: project.id,
+      UsAcc_member_id: thomas.id,
+      Rol_defines_id: ownerRole.id
+    }
+  })
+
+}

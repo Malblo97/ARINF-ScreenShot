@@ -1,5 +1,5 @@
 // src/test-cloner-read.ts
-import { ScriptCloner } from './patterns/prototype/ScriptCloner'
+/* import { ScriptCloner } from './patterns/prototype/ScriptCloner'
 
 async function main() {
   const cloner = new ScriptCloner()
@@ -7,3 +7,4 @@ async function main() {
   console.log(JSON.stringify(script, null, 2))
 }
 main()
+*/
