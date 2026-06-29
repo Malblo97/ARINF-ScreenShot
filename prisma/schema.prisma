@@ -262,7 +262,7 @@ model SceneElements {
   Comments                 Comments[]
   Notes                    Notes[]
 
-  @@unique([Scen_contains_id, position])
+  @@index ([Scen_contains_id, position])
   @@map("SceneElements")
 }
 
